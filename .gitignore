@@ -40,3 +40,6 @@ out/
 .env
 *.env
 .DS_Store
+*.jar
+*.war
+*.service
