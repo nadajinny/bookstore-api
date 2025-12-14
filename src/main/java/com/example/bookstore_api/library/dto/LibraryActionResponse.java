@@ -1,0 +1,16 @@
+package com.example.bookstore_api.library.dto;
+
+import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+@AllArgsConstructor
+public class LibraryActionResponse {
+
+    private Long bookId;
+    private String message;
+    private LocalDateTime occurredAt;
+}
