@@ -61,4 +61,9 @@ public class AuthService {
                 .refreshTokenExpiresIn(jwtTokenProvider.getRefreshTokenValiditySeconds())
                 .build();
     }
+
+    @Transactional
+    public void logout(String authorizationHeader) {
+        // 토큰 무효화나 블랙리스트 처리가 필요한 경우 이곳에 구현합니다.
+    }
 }
