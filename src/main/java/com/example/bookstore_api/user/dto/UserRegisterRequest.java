@@ -1,5 +1,6 @@
 package com.example.bookstore_api.user.dto;
 
+import com.example.bookstore_api.user.entity.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -14,6 +15,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UserRegisterRequest {
 
+    @NotBlank
+    @Size(max = 100)
+    private String name;
+
     @Email
     @NotBlank
     private String email;
@@ -22,11 +27,5 @@ public class UserRegisterRequest {
     @Size(min = 8, max = 50)
     private String password;
 
-    @NotBlank
-    @Size(max = 100)
-    private String name;
-
-    @NotBlank
-    @Size(max = 20)
-    private String phone;
+    private UserRole role;
 }

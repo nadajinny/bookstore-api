@@ -72,6 +72,14 @@ public class User {
         this.passwordHash = passwordHash;
     }
 
+    public void changeName(String name) {
+        this.name = name;
+    }
+
+    public void changeEmail(String email) {
+        this.email = email;
+    }
+
     public void changeRole(UserRole role) {
         this.role = role;
     }
