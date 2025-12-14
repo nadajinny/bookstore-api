@@ -1,13 +1,10 @@
-package com.example.bookstore_api.user.entity;
+package com.example.bookstore_api.book.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -17,35 +14,42 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users", indexes = {
-        @Index(name = "idx_users_email", columnList = "email")
-})
+@Table(name = "books")
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class User {
+public class Book {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 100)
-    private String name;
+    @Column(nullable = false, length = 200)
+    private String title;
 
-    @Column(nullable = false, unique = true, length = 255)
-    private String email;
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
+    @Column(unique = true, length = 20)
+    private String isbn;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
+
+    @Column(nullable = false)
     @Builder.Default
-    private UserRole role = UserRole.USER;
+    private Integer stock = 0;
+
+    @Column(columnDefinition = "json", nullable = false)
+    private String authors;
+
+    @Column(columnDefinition = "json", nullable = false)
+    private String categories;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -68,23 +72,15 @@ public class User {
         this.deletedAt = null;
     }
 
-    public void changePassword(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public void changeRole(UserRole role) {
-        this.role = role;
-    }
-
     @PrePersist
-    protected void onPersist() {
+    void onPersist() {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
     }
 
     @PreUpdate
-    protected void onUpdate() {
+    void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
 }
