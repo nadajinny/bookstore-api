@@ -4,6 +4,23 @@ Spring Boot 3.3 기반의 **온라인 서점 백엔드 REST API** 프로젝트�
 
 ---
 
+## 📝 프로젝트 개요 & 실행 가이드
+- **프로젝트 설명**: 온라인 서점 운영에 필요한 핵심 도메인(Users/Books/Reviews/Orders 등)을 모듈화해 JWT 인증, RBAC, 페이지네이션·검색/정렬, 표준 에러 응답을 지원하는 Spring Boot 기반 REST API입니다. 계층형 구조(Controller → Service → Repository)와 Soft Delete, 공통 응답 DTO로 일관된 코드를 유지합니다.
+- **Swagger 주소**: `http://113.198.66.75:10175/swagger-ui/index.html`
+- **API Root**: `http://113.198.66.75:10175/api`
+- **코드 설치/실행**
+  ```bash
+  # 1) Gradle 의존성 설치 및 빌드
+  ./gradlew clean build
+
+  # 2) 애플리케이션 실행 (기본 8080, prod 프로필은 10175 포트)
+  java -jar build/libs/bookstore-api-0.0.1-SNAPSHOT.jar
+  # 또는
+  SPRING_PROFILES_ACTIVE=prod java -jar build/libs/bookstore-api-0.0.1-SNAPSHOT.jar
+  ```
+
+---
+
 ## 🔗 서비스 주소
 - **Swagger UI**  
   http://113.198.66.75:10175/swagger-ui/index.html
@@ -123,6 +140,28 @@ Postman에서 API를 테스트하려면 아래 방법 중 하나를 사용할 �
 #### 권장 환경 변수
 - `base_url` = `http://113.198.66.75:10175`
 - `access_token` = (로그인 후 발급받은 JWT Access Token)
+
+---
+
+## 🌍 환경 변수 (.env)
+| Key | 설명 | 예시 값 |
+| --- | --- | --- |
+| `DB_URL` | MySQL 커넥션 문자열 (`jdbc:mysql://host:port/db`) | `jdbc:mysql://113.198.66.75:3306/bookstore` |
+| `DB_USERNAME` | 애플리케이션 DB 계정 | `bookstore_app` |
+| `DB_PASSWORD` | DB 계정 비밀번호 | `change-me` |
+| `JWT_SECRET` | HS256 서명용 Base64 인코딩 시크릿 | `please-update-this-secret` |
+| `SPRING_PROFILES_ACTIVE` *(선택)* | 실행 프로필(dev/prod) | `prod` |
+
+> 루트에 제공된 `.env.example` 파일을 복사해 `.env`를 만든 뒤, 실제 환경에 맞는 값으로 교체하세요. 민감 정보(.env, PEM 키 등)는 Git에 커밋하지 않습니다.
+
+```env
+# .env.example
+DB_URL=jdbc:mysql://localhost:3306/bookstore
+DB_USERNAME=bookstore
+DB_PASSWORD=changeme
+
+JWT_SECRET=please-update-this-secret
+```
 
 ---
 
