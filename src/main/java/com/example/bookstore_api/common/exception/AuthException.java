@@ -17,4 +17,8 @@ public class AuthException extends BusinessException {
     public static AuthException tokenExpired() {
         return new AuthException(ErrorCode.TOKEN_EXPIRED, "토큰이 만료되었습니다.");
     }
+
+    public static AuthException invalidToken(String message) {
+        return new AuthException(ErrorCode.INVALID_TOKEN, message);
+    }
 }
