@@ -1,0 +1,314 @@
+{
+  "info": {
+    "_postman_id": "c1b5c2a1-1b2a-4f5b-9e8c-bookstore-api",
+    "name": "Bookstore API",
+    "description": "Spring Boot 3.3 Bookstore API (Users, Auth, Books, Reviews, Wishlist, Library)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://113.198.66.75:10175" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/users/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"홍길동\",\n  \"email\": \"hong@test.com\",\n  \"password\": \"password123!\",\n  \"role\": \"USER\"\n}"
+            }
+          },
+          "description": "신규 사용자 회원가입"
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/users/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"hong@test.com\",\n  \"password\": \"password123!\"\n}"
+            }
+          },
+          "description": "Access/Refresh 토큰 발급"
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/users/refresh-token",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+            }
+          },
+          "description": "새 Access/Refresh 토큰 재발급"
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": "{{base_url}}/api/users/logout"
+          },
+          "description": "로그아웃 (토큰 무효화 훅)"
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/api/users/me"
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/users/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"홍길동2\",\n  \"email\": \"hong2@test.com\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Account",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/api/users/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Books",
+      "item": [
+        {
+          "name": "Get Books",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/books?page=0&size=10&sort=createdAt,desc"
+          }
+        },
+        {
+          "name": "Get Book Detail",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/books/1"
+          }
+        },
+        {
+          "name": "Create Book (SELLER/ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/books",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Spring Boot in Action\",\n  \"description\": \"실습 중심의 Spring Boot 가이드\",\n  \"isbn\": \"9781234567890\",\n  \"price\": 28000,\n  \"stock\": 50,\n  \"authors\": [\"홍작가\"],\n  \"categories\": [\"개발\", \"Spring\"]\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/reviews",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": 1,\n  \"rating\": 5,\n  \"content\": \"정말 좋은 책입니다.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Reviews by Book",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/reviews?bookId=1&sort=createdAt,desc"
+          }
+        },
+        {
+          "name": "Like Review",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/api/reviews/1/like"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "Add Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reviewId\": 1,\n  \"content\": \"저도 동의합니다!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Comments",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/comments?reviewId=1&page=0&size=10"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wishlist",
+      "item": [
+        {
+          "name": "Add to Wishlist",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/wishlist",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Wishlist",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/api/wishlist"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Library",
+      "item": [
+        {
+          "name": "Add to Library",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/library",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Library",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/api/library?page=0&size=10"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Carts",
+      "item": [
+        {
+          "name": "Get Cart Items",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/api/carts/items"
+          }
+        },
+        {
+          "name": "Add Cart Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/carts/items",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookId\": 1,\n  \"quantity\": 2\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/orders",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"bookId\": 1, \"quantity\": 1 },\n    { \"bookId\": 2, \"quantity\": 2 }\n  ],\n  \"recipientName\": \"홍길동\",\n  \"shippingAddress\": \"서울시 강남구 테헤란로 123\",\n  \"paymentMethod\": \"CARD\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Order Items",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/api/orders/items"
+          }
+        }
+      ]
+    }
+  ]
+}
