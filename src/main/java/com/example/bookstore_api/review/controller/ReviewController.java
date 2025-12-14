@@ -1,13 +1,23 @@
 package com.example.bookstore_api.review.controller;
 
+import com.example.bookstore_api.auth.security.CustomUserDetails;
+import com.example.bookstore_api.common.exception.AuthException;
 import com.example.bookstore_api.common.response.ApiResponse;
-import com.example.bookstore_api.review.dto.ReviewRequest;
-import com.example.bookstore_api.review.dto.ReviewResponse;
+import com.example.bookstore_api.review.dto.ReviewCreateRequest;
+import com.example.bookstore_api.review.dto.ReviewDetailResponse;
+import com.example.bookstore_api.review.dto.ReviewLikeResponse;
+import com.example.bookstore_api.review.dto.ReviewListResponse;
+import com.example.bookstore_api.review.dto.ReviewSummaryResponse;
+import com.example.bookstore_api.review.dto.ReviewUpdateRequest;
+import com.example.bookstore_api.review.service.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.time.LocalDateTime;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -15,70 +25,103 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/reviews")
+@RequiredArgsConstructor
 @Tag(name = "Reviews", description = "리뷰 API")
 public class ReviewController {
 
-    @PostMapping("/books/{bookId}/reviews")
-    @Operation(summary = "리뷰 작성")
-    public ApiResponse<ReviewResponse> createReview(
-        @PathVariable Long bookId,
-        @Valid @RequestBody ReviewRequest request
+    private final ReviewService reviewService;
+
+    @PostMapping
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "리뷰 작성", description = "로그인한 사용자가 도서에 리뷰를 작성합니다.")
+    public ApiResponse<ReviewDetailResponse> createReview(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Valid @RequestBody ReviewCreateRequest request
     ) {
-        return ApiResponse.ok(buildResponse(1L, bookId, request));
+        return ApiResponse.ok(reviewService.createReview(requireUserId(userDetails), request));
     }
 
-    @GetMapping("/reviews/{reviewId}")
-    @Operation(summary = "리뷰 상세 조회")
-    public ApiResponse<ReviewResponse> getReview(@PathVariable Long reviewId) {
-        ReviewResponse response = ReviewResponse.builder()
-            .reviewId(reviewId)
-            .bookId(1L)
-            .bookTitle("샘플 도서")
-            .rating(5)
-            .content("훌륭한 책입니다.")
-            .createdAt(LocalDateTime.now().minusDays(1))
-            .build();
-        return ApiResponse.ok(response);
+    @GetMapping
+    @Operation(summary = "특정 도서 리뷰 목록 조회", description = "정렬과 필터링을 지원하며 평균 평점을 제공합니다.")
+    public ApiResponse<ReviewListResponse> getBookReviews(
+        @RequestParam Long bookId,
+        @RequestParam(defaultValue = "createdAt,desc") @Parameter(description = "정렬 조건 (rating,createdAt,likes)") String sort,
+        @RequestParam(required = false) @Parameter(description = "필터 조건 (e.g. rating:5)") String filter,
+        @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long userId = userDetails != null ? userDetails.getId() : null;
+        return ApiResponse.ok(reviewService.getBookReviews(bookId, sort, filter, userId));
     }
 
-    @PatchMapping("/reviews/{reviewId}")
-    @Operation(summary = "리뷰 수정")
-    public ApiResponse<ReviewResponse> updateReview(
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "내 리뷰 목록 조회")
+    public ApiResponse<List<ReviewSummaryResponse>> getMyReviews(
+        @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return ApiResponse.ok(reviewService.getMyReviews(requireUserId(userDetails)));
+    }
+
+    @PatchMapping("/{reviewId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "리뷰 수정", description = "본인이 작성한 리뷰만 수정할 수 있습니다.")
+    public ApiResponse<ReviewDetailResponse> updateReview(
         @PathVariable Long reviewId,
-        @Valid @RequestBody ReviewRequest request
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Valid @RequestBody ReviewUpdateRequest request
     ) {
-        ReviewResponse response = buildResponse(reviewId, 1L, request);
-        return ApiResponse.ok(response);
+        return ApiResponse.ok(reviewService.updateReview(requireUserId(userDetails), reviewId, request));
     }
 
-    @DeleteMapping("/reviews/{reviewId}")
-    @Operation(summary = "리뷰 삭제")
-    public ApiResponse<Void> deleteReview(@PathVariable Long reviewId) {
+    @DeleteMapping("/{reviewId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "리뷰 삭제", description = "Soft Delete 방식으로 처리합니다.")
+    public ApiResponse<Void> deleteReview(
+        @PathVariable Long reviewId,
+        @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        reviewService.deleteReview(requireUserId(userDetails), reviewId);
         return ApiResponse.ok(null);
     }
 
-    @GetMapping("/reviews/me")
-    @Operation(summary = "내 리뷰 조회")
-    public ApiResponse<List<ReviewResponse>> getMyReviews() {
-        List<ReviewResponse> responses = List.of(
-            buildResponse(1L, 1L, ReviewRequest.builder().rating(5).content("재미있어요").build()),
-            buildResponse(2L, 2L, ReviewRequest.builder().rating(4).content("추천합니다").build())
-        );
-        return ApiResponse.ok(responses);
+    @PostMapping("/{reviewId}/like")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "리뷰 좋아요", description = "좋아요 수가 증가합니다.")
+    public ApiResponse<ReviewLikeResponse> likeReview(
+        @PathVariable Long reviewId,
+        @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return ApiResponse.ok(reviewService.likeReview(requireUserId(userDetails), reviewId));
     }
 
-    private ReviewResponse buildResponse(Long reviewId, Long bookId, ReviewRequest request) {
-        return ReviewResponse.builder()
-            .reviewId(reviewId)
-            .bookId(bookId)
-            .bookTitle("샘플 도서")
-            .rating(request.getRating())
-            .content(request.getContent())
-            .createdAt(LocalDateTime.now())
-            .build();
+    @DeleteMapping("/{reviewId}/like")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "리뷰 좋아요 취소", description = "좋아요 수가 감소합니다.")
+    public ApiResponse<ReviewLikeResponse> unlikeReview(
+        @PathVariable Long reviewId,
+        @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return ApiResponse.ok(reviewService.unlikeReview(requireUserId(userDetails), reviewId));
+    }
+
+    @GetMapping("/liked")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "좋아요한 리뷰 조회")
+    public ApiResponse<List<ReviewSummaryResponse>> getLikedReviews(
+        @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return ApiResponse.ok(reviewService.getLikedReviews(requireUserId(userDetails)));
+    }
+
+    private Long requireUserId(CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            throw AuthException.unauthorized("로그인이 필요합니다.");
+        }
+        return userDetails.getId();
     }
 }
